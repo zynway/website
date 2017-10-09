@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:task="http://www.springframework.org/schema/task"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context.xsd
+       http://www.springframework.org/schema/aop
+       http://www.springframework.org/schema/aop/spring-aop.xsd
+       http://www.springframework.org/schema/task
+       http://www.springframework.org/schema/task/spring-task.xsd">
+
+    <!-- 载入主属性文件 -->
+    <context:property-placeholder location="classpath:application.properties"
+                                  file-encoding="UTF-8"
+                                  ignore-resource-not-found="true" />
+
+    <!-- 激活自动代理功能 -->
+    <aop:aspectj-autoproxy proxy-target-class="true" />
+    <!-- 激活定时和任务异步处理功能（@Async @Scheduled） -->
+    <task:annotation-driven scheduler="scheduler"
+                            executor="executor"
+                            proxy-target-class="true" />
+    <!-- 任务调度器 -->
+    <task:scheduler id="scheduler" pool-size="10"/>
+    <!-- 任务执行器 -->
+    <task:executor id="executor" pool-size="10"/>
+
+    <!-- 组件扫描注入 -->
+    <context:component-scan base-package="core"
+                            name-generator="org.teamshine.pangoo.context.annotation.AnnotationBeanNameGenerator"/>
+
+    <!-- 请求工厂 -->
+    <bean id="requestFactory" class="org.springframework.http.client.SimpleClientHttpRequestFactory" />
+
+    <!-- Rest模板 -->
+    <bean id="restTemplate" class="org.springframework.web.client.RestTemplate">
+        <property name="requestFactory" ref="requestFactory"/>
+    </bean>
+
+    <!-- ConversionService(对HttpServletRequest参数进行格式转换) -->
+    <bean id="conversionService" class="org.springframework.format.support.FormattingConversionServiceFactoryBean">
+        <property name="converters">
+            <set>
+                <bean class="org.teamshine.pangoo.convert.StringToTimestampConvert"/>
+                <bean class="org.teamshine.pangoo.convert.StringToMapConvert"/>
+                <bean class="org.teamshine.pangoo.convert.StringToListConvert"/>
+                <bean class="org.teamshine.pangoo.convert.StringToListMapConvert"/>
+            </set>
+        </property>
+    </bean>
+
+    <!-- 文件上传解析器 -->
+    <bean id="multipartResolver" class="org.teamshine.pangoo.multipart.RestMultipartResolver">
+        <property name="maxUploadSize" value="${webmvc.multipart.max-upload-size:10}"/>
+    </bean>
+</beans>
